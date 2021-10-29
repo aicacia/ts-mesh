@@ -1,0 +1,12 @@
+.parcel-cache/
+dist/
+.github/
+.nyc_output/
+.vscode/
+coverage/
+docs/
+types/
+browser/
+cjs/
+esm/
+node_modules/
