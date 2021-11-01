@@ -66,6 +66,7 @@
   },
   "dependencies": {
     "@aicacia/rand": "0",
+    "buffer": "6",
     "eventemitter3": "4",
     "simple-peer": "9",
     "socket.io-client": "4"

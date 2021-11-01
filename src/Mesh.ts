@@ -1,4 +1,5 @@
 import { EventEmitter } from "eventemitter3";
+import { Buffer } from "buffer";
 import type { IPeerData } from "./Peer";
 import type { Peer } from "./Peer";
 import { nextIntInRange, fromArray } from "@aicacia/rand";
