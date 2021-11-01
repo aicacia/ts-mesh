@@ -15,7 +15,6 @@ export interface IPeerEvents {
     data(this: Peer, data: IPeerData, from: string): void;
 }
 export interface IPeerOptions {
-    SimplePeer: SimplePeer.SimplePeer;
     origin?: string;
     namespace?: string;
 }
@@ -23,7 +22,7 @@ export declare class Peer extends EventEmitter<IPeerEvents> {
     protected socket: Socket;
     protected readonly connections: Map<string, PeerConnection>;
     protected SimplePeer: SimplePeer.SimplePeer;
-    constructor(options: IPeerOptions);
+    constructor(SimplePeer: SimplePeer.SimplePeer, options?: IPeerOptions);
     getId(): string;
     isConnected(): boolean;
     connected(): Promise<Socket<import("@socket.io/component-emitter").DefaultEventsMap, import("@socket.io/component-emitter").DefaultEventsMap>>;

@@ -18,7 +18,6 @@ export interface IPeerEvents {
 }
 
 export interface IPeerOptions {
-  SimplePeer: SimplePeer.SimplePeer;
   origin?: string;
   namespace?: string;
 }
@@ -28,9 +27,9 @@ export class Peer extends EventEmitter<IPeerEvents> {
   protected readonly connections: Map<string, PeerConnection> = new Map();
   protected SimplePeer: SimplePeer.SimplePeer;
 
-  constructor(options: IPeerOptions) {
+  constructor(SimplePeer: SimplePeer.SimplePeer, options: IPeerOptions = {}) {
     super();
-    this.SimplePeer = options.SimplePeer;
+    this.SimplePeer = SimplePeer;
     this.socket = io(
       `${options.origin || "wss://mesh.aicacia.com"}/${options.namespace || ""}`
     );

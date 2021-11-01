@@ -7,7 +7,7 @@ export const DEFAULT_SYNC_MS = 60_000;
 export const DEFAULT_MESSAGE_LAST_SEEN_DELETE_MS = 3 * 60_000;
 
 export interface IMeshEvents {
-  data(data: IPeerData, from: string): void;
+  data(data: any, from: string): void;
 }
 
 export interface IMeshOptions {
@@ -52,7 +52,7 @@ export class Mesh extends EventEmitter<IMeshEvents> {
   getPeer() {
     return this.peer;
   }
-  broadcast(payload: IPeerData) {
+  broadcast(payload: any) {
     const from = this.peer.getId(),
       id = this.messageId++,
       messageId = `${from}-${id}`;

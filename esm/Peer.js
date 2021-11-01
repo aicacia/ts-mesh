@@ -4,9 +4,9 @@ export class Peer extends EventEmitter {
     socket;
     connections = new Map();
     SimplePeer;
-    constructor(options) {
+    constructor(SimplePeer, options = {}) {
         super();
-        this.SimplePeer = options.SimplePeer;
+        this.SimplePeer = SimplePeer;
         this.socket = io(`${options.origin || "wss://mesh.aicacia.com"}/${options.namespace || ""}`);
         this.socket.on("signal", this.onSignal);
         this.socket.on("connect", this.onConnect);

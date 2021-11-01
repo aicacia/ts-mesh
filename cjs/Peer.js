@@ -4,7 +4,7 @@ exports.waitForSocket = exports.Peer = void 0;
 const eventemitter3_1 = require("eventemitter3");
 const socket_io_client_1 = require("socket.io-client");
 class Peer extends eventemitter3_1.EventEmitter {
-    constructor(options) {
+    constructor(SimplePeer, options = {}) {
         super();
         this.connections = new Map();
         this.onSignal = (data, from) => {
@@ -45,7 +45,7 @@ class Peer extends eventemitter3_1.EventEmitter {
         this.onLeave = (id, _reason) => {
             this.disconnectFrom(id);
         };
-        this.SimplePeer = options.SimplePeer;
+        this.SimplePeer = SimplePeer;
         this.socket = (0, socket_io_client_1.io)(`${options.origin || "wss://mesh.aicacia.com"}/${options.namespace || ""}`);
         this.socket.on("signal", this.onSignal);
         this.socket.on("connect", this.onConnect);

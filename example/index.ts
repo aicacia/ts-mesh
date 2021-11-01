@@ -3,8 +3,7 @@ import type { IPeerData } from "../src";
 import { Mesh, Peer } from "../src";
 
 async function onLoad() {
-  const peer = new Peer({
-      SimplePeer,
+  const peer = new Peer(SimplePeer, {
       namespace: "example-namespace",
     }),
     mesh = new Mesh(peer, {
@@ -18,7 +17,7 @@ async function onLoad() {
       message = input.value;
 
     if (message) {
-      mesh.broadcast(message);
+      mesh.broadcast({ message });
       onMessage(message, "me");
       input.value = "";
     }
