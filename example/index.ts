@@ -1,8 +1,10 @@
+import SimplePeer from "simple-peer";
 import type { IPeerData } from "../src";
 import { Mesh, Peer } from "../src";
 
 async function onLoad() {
   const peer = new Peer({
+      SimplePeer,
       namespace: "example-namespace",
     }),
     mesh = new Mesh(peer, {

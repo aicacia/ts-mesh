@@ -1,6 +1,6 @@
 import { EventEmitter } from "eventemitter3";
 import type { SimplePeerData, Instance } from "simple-peer";
-import SimplePeer from "simple-peer";
+import type SimplePeer from "simple-peer";
 import { io, Socket } from "socket.io-client";
 
 export type IPeerData = SimplePeerData;
@@ -18,6 +18,7 @@ export interface IPeerEvents {
 }
 
 export interface IPeerOptions {
+  SimplePeer: SimplePeer.SimplePeer;
   origin?: string;
   namespace?: string;
 }
@@ -25,9 +26,11 @@ export interface IPeerOptions {
 export class Peer extends EventEmitter<IPeerEvents> {
   protected socket: Socket;
   protected readonly connections: Map<string, PeerConnection> = new Map();
+  protected SimplePeer: SimplePeer.SimplePeer;
 
-  constructor(options: IPeerOptions = {}) {
+  constructor(options: IPeerOptions) {
     super();
+    this.SimplePeer = options.SimplePeer;
     this.socket = io(
       `${options.origin || "wss://mesh.aicacia.com"}/${options.namespace || ""}`
     );
@@ -176,7 +179,7 @@ export class Peer extends EventEmitter<IPeerEvents> {
   }
 
   private createConnection(id: string, initiator: boolean) {
-    const connection = new SimplePeer({
+    const connection = new this.SimplePeer({
       initiator,
       trickle: false,
     });

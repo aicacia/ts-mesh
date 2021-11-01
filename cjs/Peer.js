@@ -1,12 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.waitForSocket = exports.Peer = void 0;
-const tslib_1 = require("tslib");
 const eventemitter3_1 = require("eventemitter3");
-const simple_peer_1 = (0, tslib_1.__importDefault)(require("simple-peer"));
 const socket_io_client_1 = require("socket.io-client");
 class Peer extends eventemitter3_1.EventEmitter {
-    constructor(options = {}) {
+    constructor(options) {
         super();
         this.connections = new Map();
         this.onSignal = (data, from) => {
@@ -47,6 +45,7 @@ class Peer extends eventemitter3_1.EventEmitter {
         this.onLeave = (id, _reason) => {
             this.disconnectFrom(id);
         };
+        this.SimplePeer = options.SimplePeer;
         this.socket = (0, socket_io_client_1.io)(`${options.origin || "wss://mesh.aicacia.com"}/${options.namespace || ""}`);
         this.socket.on("signal", this.onSignal);
         this.socket.on("connect", this.onConnect);
@@ -144,7 +143,7 @@ class Peer extends eventemitter3_1.EventEmitter {
         }
     }
     createConnection(id, initiator) {
-        const connection = new simple_peer_1.default({
+        const connection = new this.SimplePeer({
             initiator,
             trickle: false,
         });
