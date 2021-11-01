@@ -9,8 +9,6 @@ class Peer extends eventemitter3_1.EventEmitter {
     constructor(options = {}) {
         super();
         this.connections = new Map();
-        this.offers = new Set();
-        this.answers = new Set();
         this.onSignal = (data, from) => {
             var _a;
             let connection = this.connections.get(from);
@@ -36,20 +34,25 @@ class Peer extends eventemitter3_1.EventEmitter {
             }
             this.connections.clear();
         };
-        this.onDiscover = (id) => {
+        this.onJoin = (id) => {
             if (id !== this.socket.id) {
-                this.emit("discover", id);
+                this.emit("join", id);
+            }
+        };
+        this.onAnnounce = (id) => {
+            if (id !== this.socket.id) {
+                this.emit("announce", id);
             }
         };
         this.onLeave = (id, _reason) => {
             this.disconnectFrom(id);
         };
-        this.socket = (0, socket_io_client_1.io)(options.url || "wss://socket.aicacia.com");
+        this.socket = (0, socket_io_client_1.io)(`${options.origin || "wss://mesh.aicacia.com"}/${options.namespace || ""}`);
         this.socket.on("signal", this.onSignal);
         this.socket.on("connect", this.onConnect);
         this.socket.on("disconnect", this.onDisonnect);
-        this.socket.on("join", this.onDiscover);
-        this.socket.on("announce", this.onDiscover);
+        this.socket.on("join", this.onJoin);
+        this.socket.on("announce", this.onAnnounce);
         this.socket.on("leave", this.onLeave);
     }
     getId() {

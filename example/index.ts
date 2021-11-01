@@ -3,12 +3,10 @@ import { Mesh, Peer } from "../src";
 
 async function onLoad() {
   const peer = new Peer({
-      url: "ws://localhost:8080/example-namespace",
+      namespace: "example-namespace",
     }),
     mesh = new Mesh(peer, {
-      maxConnections: 2,
-      syncMS: 10000,
-      messageLastSeenDeleteMS: 5000,
+      maxConnections: 1,
     });
 
   let currentId: string;

@@ -4,7 +4,8 @@ import { Socket } from "socket.io-client";
 export declare type IPeerData = SimplePeerData;
 export declare type PeerConnection = Instance;
 export interface IPeerEvents {
-    discover(this: Peer, id: string): void;
+    join(this: Peer, id: string): void;
+    announce(this: Peer, id: string): void;
     connect(this: Peer, id: string): void;
     disconnect(this: Peer): void;
     error(this: Peer, error: Error): void;
@@ -13,13 +14,12 @@ export interface IPeerEvents {
     data(this: Peer, data: IPeerData, from: string): void;
 }
 export interface IPeerOptions {
-    url?: string;
+    origin?: string;
+    namespace?: string;
 }
 export declare class Peer extends EventEmitter<IPeerEvents> {
     protected socket: Socket;
     protected readonly connections: Map<string, PeerConnection>;
-    protected readonly offers: Set<string>;
-    protected readonly answers: Set<string>;
     constructor(options?: IPeerOptions);
     getId(): string;
     isConnected(): boolean;
@@ -28,7 +28,8 @@ export declare class Peer extends EventEmitter<IPeerEvents> {
     private onSignal;
     private onConnect;
     private onDisonnect;
-    private onDiscover;
+    private onJoin;
+    private onAnnounce;
     private onLeave;
     send(to: string, data: IPeerData): this;
     broadcast(data: IPeerData): this;

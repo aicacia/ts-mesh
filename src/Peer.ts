@@ -7,7 +7,8 @@ export type IPeerData = SimplePeerData;
 export type PeerConnection = Instance;
 
 export interface IPeerEvents {
-  discover(this: Peer, id: string): void;
+  join(this: Peer, id: string): void;
+  announce(this: Peer, id: string): void;
   connect(this: Peer, id: string): void;
   disconnect(this: Peer): void;
   error(this: Peer, error: Error): void;
@@ -17,23 +18,24 @@ export interface IPeerEvents {
 }
 
 export interface IPeerOptions {
-  url?: string;
+  origin?: string;
+  namespace?: string;
 }
 
 export class Peer extends EventEmitter<IPeerEvents> {
   protected socket: Socket;
   protected readonly connections: Map<string, PeerConnection> = new Map();
-  protected readonly offers: Set<string> = new Set();
-  protected readonly answers: Set<string> = new Set();
 
   constructor(options: IPeerOptions = {}) {
     super();
-    this.socket = io(options.url || "wss://socket.aicacia.com");
+    this.socket = io(
+      `${options.origin || "wss://mesh.aicacia.com"}/${options.namespace || ""}`
+    );
     this.socket.on("signal", this.onSignal);
     this.socket.on("connect", this.onConnect);
     this.socket.on("disconnect", this.onDisonnect);
-    this.socket.on("join", this.onDiscover);
-    this.socket.on("announce", this.onDiscover);
+    this.socket.on("join", this.onJoin);
+    this.socket.on("announce", this.onAnnounce);
     this.socket.on("leave", this.onLeave);
   }
 
@@ -78,9 +80,14 @@ export class Peer extends EventEmitter<IPeerEvents> {
     }
     this.connections.clear();
   };
-  private onDiscover = (id: string) => {
+  private onJoin = (id: string) => {
     if (id !== this.socket.id) {
-      this.emit("discover", id);
+      this.emit("join", id);
+    }
+  };
+  private onAnnounce = (id: string) => {
+    if (id !== this.socket.id) {
+      this.emit("announce", id);
     }
   };
   private onLeave = (id: string, _reason: string) => {

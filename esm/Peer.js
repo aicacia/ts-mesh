@@ -4,16 +4,14 @@ import { io } from "socket.io-client";
 export class Peer extends EventEmitter {
     socket;
     connections = new Map();
-    offers = new Set();
-    answers = new Set();
     constructor(options = {}) {
         super();
-        this.socket = io(options.url || "wss://socket.aicacia.com");
+        this.socket = io(`${options.origin || "wss://mesh.aicacia.com"}/${options.namespace || ""}`);
         this.socket.on("signal", this.onSignal);
         this.socket.on("connect", this.onConnect);
         this.socket.on("disconnect", this.onDisonnect);
-        this.socket.on("join", this.onDiscover);
-        this.socket.on("announce", this.onDiscover);
+        this.socket.on("join", this.onJoin);
+        this.socket.on("announce", this.onAnnounce);
         this.socket.on("leave", this.onLeave);
     }
     getId() {
@@ -52,9 +50,14 @@ export class Peer extends EventEmitter {
         }
         this.connections.clear();
     };
-    onDiscover = (id) => {
+    onJoin = (id) => {
         if (id !== this.socket.id) {
-            this.emit("discover", id);
+            this.emit("join", id);
+        }
+    };
+    onAnnounce = (id) => {
+        if (id !== this.socket.id) {
+            this.emit("announce", id);
         }
     };
     onLeave = (id, _reason) => {

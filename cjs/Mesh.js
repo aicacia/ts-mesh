@@ -24,8 +24,19 @@ class Mesh extends eventemitter3_1.EventEmitter {
             }
         };
         this.onDiscover = (id) => {
+            if (this.peer.getConnections().has(id)) {
+                return;
+            }
             if (this.needsConnection()) {
                 this.peer.connectToInBackground(id);
+            }
+            else {
+                this.peer.connectTo(id).then(() => {
+                    const peers = Array.from(this.peer.getConnections().keys());
+                    if (peers.length > 1) {
+                        this.peer.disconnectFrom(getRandomIdExceptFor(peers, id));
+                    }
+                });
             }
         };
         this.onSync = () => {
@@ -37,16 +48,18 @@ class Mesh extends eventemitter3_1.EventEmitter {
         };
         this.peer = peer;
         this.peer.on("data", this.onData);
-        this.peer.on("discover", this.onDiscover);
+        this.peer.on("join", this.onDiscover);
+        this.peer.on("announce", this.onDiscover);
         this.peer.once("connect", this.onSync);
         if (typeof options.maxConnections === "number" &&
-            options.maxConnections > 1) {
+            options.maxConnections > 0) {
             this.maxConnections = options.maxConnections;
         }
         if (typeof options.syncMS === "number" && options.syncMS > 5000) {
             this.syncMS = options.syncMS;
         }
-        if (typeof options.messageLastSeenDeleteMS === "number") {
+        if (typeof options.messageLastSeenDeleteMS === "number" &&
+            options.messageLastSeenDeleteMS > 0) {
             this.messageLastSeenDeleteMS = options.messageLastSeenDeleteMS;
         }
         this.sync();
@@ -82,3 +95,12 @@ class Mesh extends eventemitter3_1.EventEmitter {
     }
 }
 exports.Mesh = Mesh;
+function getRandomIdExceptFor(ids, id) {
+    const randomId = (0, rand_1.fromArray)(ids).unwrap();
+    if (randomId === id) {
+        return getRandomIdExceptFor(ids, id);
+    }
+    else {
+        return randomId;
+    }
+}
