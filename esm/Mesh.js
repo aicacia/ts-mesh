@@ -1,4 +1,5 @@
 import { EventEmitter } from "eventemitter3";
+import { Buffer } from "buffer";
 import { nextIntInRange, fromArray } from "@aicacia/rand";
 export const DEFAULT_SYNC_MS = 60_000;
 export const DEFAULT_MESSAGE_LAST_SEEN_DELETE_MS = 3 * 60_000;

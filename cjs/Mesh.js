@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Mesh = exports.DEFAULT_MESSAGE_LAST_SEEN_DELETE_MS = exports.DEFAULT_SYNC_MS = void 0;
 const eventemitter3_1 = require("eventemitter3");
+const buffer_1 = require("buffer");
 const rand_1 = require("@aicacia/rand");
 exports.DEFAULT_SYNC_MS = 60000;
 exports.DEFAULT_MESSAGE_LAST_SEEN_DELETE_MS = 3 * 60000;
@@ -14,7 +15,7 @@ class Mesh extends eventemitter3_1.EventEmitter {
         this.messageId = 0;
         this.messages = new Map();
         this.onData = (data, _from) => {
-            if (typeof data === "string" || Buffer.isBuffer(data)) {
+            if (typeof data === "string" || buffer_1.Buffer.isBuffer(data)) {
                 const json = JSON.parse(data.toString()), messageId = `${json.from}-${json.id}`;
                 if (!this.messages.has(messageId)) {
                     this.messages.set(messageId, Date.now());
