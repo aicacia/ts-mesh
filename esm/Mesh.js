@@ -10,12 +10,14 @@ export class Mesh extends EventEmitter {
     messageLastSeenDeleteMS = DEFAULT_MESSAGE_LAST_SEEN_DELETE_MS;
     messageId = 0;
     messages = new Map();
+    payloadsToSend = [];
     constructor(peer, options = {}) {
         super();
         this.peer = peer;
         this.peer.on("data", this.onData);
         this.peer.on("join", this.onDiscover);
         this.peer.on("announce", this.onDiscover);
+        this.peer.on("connection", this.onConnection);
         this.peer.once("connect", this.onSync);
         if (typeof options.maxConnections === "number" &&
             options.maxConnections > 0) {
@@ -34,6 +36,14 @@ export class Mesh extends EventEmitter {
         return this.peer;
     }
     broadcast(payload) {
+        if (this.peer.getConnections().size === 0) {
+            this.payloadsToSend.push(payload);
+        }
+        else {
+            return this.broadcastInternal(payload);
+        }
+    }
+    broadcastInternal(payload) {
         const from = this.peer.getId(), id = this.messageId++, messageId = `${from}-${id}`;
         this.messages.set(messageId, Date.now());
         this.peer.broadcast(JSON.stringify({
@@ -70,6 +80,12 @@ export class Mesh extends EventEmitter {
                     this.peer.disconnectFrom(getRandomIdExceptFor(peers, id));
                 }
             });
+        }
+    };
+    onConnection = () => {
+        if (this.payloadsToSend.length) {
+            this.payloadsToSend.forEach((payload) => this.broadcastInternal(payload));
+            this.payloadsToSend.length = 0;
         }
     };
     onSync = () => {

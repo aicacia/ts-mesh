@@ -17,12 +17,15 @@ export declare class Mesh extends EventEmitter<IMeshEvents> {
     protected messageLastSeenDeleteMS: number;
     protected messageId: number;
     protected messages: Map<string, number>;
+    protected payloadsToSend: Array<any>;
     constructor(peer: Peer, options?: IMeshOptions);
     getPeer(): Peer;
-    broadcast(payload: any): this;
+    broadcast(payload: any): this | undefined;
+    private broadcastInternal;
     private needsConnection;
     private onData;
     private onDiscover;
+    private onConnection;
     private onSync;
     private sync;
     private cleanOldMessages;

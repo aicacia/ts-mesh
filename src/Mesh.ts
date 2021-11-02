@@ -24,6 +24,7 @@ export class Mesh extends EventEmitter<IMeshEvents> {
   protected messageLastSeenDeleteMS = DEFAULT_MESSAGE_LAST_SEEN_DELETE_MS;
   protected messageId = 0;
   protected messages: Map<string, number> = new Map();
+  protected payloadsToSend: Array<any> = [];
 
   constructor(peer: Peer, options: IMeshOptions = {}) {
     super();
@@ -31,6 +32,7 @@ export class Mesh extends EventEmitter<IMeshEvents> {
     this.peer.on("data", this.onData);
     this.peer.on("join", this.onDiscover);
     this.peer.on("announce", this.onDiscover);
+    this.peer.on("connection", this.onConnection);
     this.peer.once("connect", this.onSync);
     if (
       typeof options.maxConnections === "number" &&
@@ -54,6 +56,14 @@ export class Mesh extends EventEmitter<IMeshEvents> {
     return this.peer;
   }
   broadcast(payload: any) {
+    if (this.peer.getConnections().size === 0) {
+      this.payloadsToSend.push(payload);
+    } else {
+      return this.broadcastInternal(payload);
+    }
+  }
+
+  private broadcastInternal(payload: any) {
     const from = this.peer.getId(),
       id = this.messageId++,
       messageId = `${from}-${id}`;
@@ -99,6 +109,13 @@ export class Mesh extends EventEmitter<IMeshEvents> {
           this.peer.disconnectFrom(getRandomIdExceptFor(peers, id));
         }
       });
+    }
+  };
+
+  private onConnection = () => {
+    if (this.payloadsToSend.length) {
+      this.payloadsToSend.forEach((payload) => this.broadcastInternal(payload));
+      this.payloadsToSend.length = 0;
     }
   };
 
