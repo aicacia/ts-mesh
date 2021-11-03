@@ -1,16 +1,19 @@
 import { EventEmitter } from "eventemitter3";
 import { Buffer } from "buffer";
-import { nextIntInRange, fromArray } from "@aicacia/rand";
 export const DEFAULT_SYNC_MS = 60_000;
-export const DEFAULT_MESSAGE_LAST_SEEN_DELETE_MS = 3 * 60_000;
+export const DEFAULT_MESSAGE_LAST_SEEN_DELETE_MS = 5 * 60_000;
+export const DEFAULT_REPLACE_OLD_PEER_MS = 5 * 60_000;
 export class Mesh extends EventEmitter {
     peer;
     maxConnections = 6;
     syncMS = DEFAULT_SYNC_MS;
     messageLastSeenDeleteMS = DEFAULT_MESSAGE_LAST_SEEN_DELETE_MS;
+    replaceOldPeerMS = DEFAULT_REPLACE_OLD_PEER_MS;
     messageId = 0;
     messages = new Map();
+    connections = new Map();
     payloadsToSend = [];
+    syncTimeoutId;
     constructor(peer, options = {}) {
         super();
         this.peer = peer;
@@ -18,7 +21,9 @@ export class Mesh extends EventEmitter {
         this.peer.on("join", this.onDiscover);
         this.peer.on("announce", this.onDiscover);
         this.peer.on("connection", this.onConnection);
-        this.peer.once("connect", this.onSync);
+        this.peer.on("disconnection", this.onDisconnection);
+        this.peer.on("connect", this.sync);
+        this.peer.on("disconnect", this.onDisconnect);
         if (typeof options.maxConnections === "number" &&
             options.maxConnections > 0) {
             this.maxConnections = options.maxConnections;
@@ -30,13 +35,19 @@ export class Mesh extends EventEmitter {
             options.messageLastSeenDeleteMS > 0) {
             this.messageLastSeenDeleteMS = options.messageLastSeenDeleteMS;
         }
-        this.sync();
+        if (typeof options.replaceOldPeerMS === "number" &&
+            options.replaceOldPeerMS > 0) {
+            this.replaceOldPeerMS = options.replaceOldPeerMS;
+        }
+        if (this.peer.isConnected()) {
+            this.sync();
+        }
     }
     getPeer() {
         return this.peer;
     }
     broadcast(payload) {
-        if (this.peer.getConnections().size === 0) {
+        if (this.connections.size === 0) {
             this.payloadsToSend.push(payload);
         }
         else {
@@ -54,7 +65,7 @@ export class Mesh extends EventEmitter {
         return this;
     }
     needsConnection() {
-        return this.peer.getConnections().size < this.maxConnections;
+        return this.connections.size < this.maxConnections;
     }
     onData = (data, _from) => {
         if (typeof data === "string" || Buffer.isBuffer(data)) {
@@ -67,25 +78,44 @@ export class Mesh extends EventEmitter {
         }
     };
     onDiscover = (id) => {
-        if (this.peer.getConnections().has(id)) {
-            return;
-        }
-        if (this.needsConnection()) {
-            this.peer.connectToInBackground(id);
-        }
-        else {
-            this.peer.connectTo(id).then(() => {
-                const peers = Array.from(this.peer.getConnections().keys());
-                if (peers.length > 1) {
-                    this.peer.disconnectFrom(getRandomIdExceptFor(peers, id));
+        if (!this.peer.getConnections().has(id)) {
+            let shouldConnect = false;
+            if (this.needsConnection()) {
+                shouldConnect = true;
+            }
+            else {
+                const peer = getOldestPeerId(this.connections.entries());
+                if (peer) {
+                    const [oldestPeerId, connectedAt] = peer;
+                    if (connectedAt < Date.now() - this.replaceOldPeerMS) {
+                        this.peer.disconnectFrom(oldestPeerId);
+                        shouldConnect = true;
+                    }
                 }
-            });
+            }
+            if (shouldConnect) {
+                this.peer.connectToInBackground(id);
+            }
         }
     };
-    onConnection = () => {
+    onConnection = (_connection, id) => {
         if (this.payloadsToSend.length) {
             this.payloadsToSend.forEach((payload) => this.broadcastInternal(payload));
             this.payloadsToSend.length = 0;
+        }
+        this.connections.set(id, Date.now());
+    };
+    onDisconnection = (_connection, id) => {
+        if (this.needsConnection()) {
+            this.peer.announce();
+        }
+        this.connections.delete(id);
+    };
+    onDisconnect = () => {
+        this.connections.clear();
+        if (this.syncTimeoutId) {
+            clearTimeout(this.syncTimeoutId);
+            this.syncTimeoutId = undefined;
         }
     };
     onSync = () => {
@@ -93,11 +123,12 @@ export class Mesh extends EventEmitter {
             this.peer.announce();
         }
         this.cleanOldMessages();
+        this.syncTimeoutId = undefined;
         this.sync();
     };
-    sync() {
-        setTimeout(this.onSync, nextIntInRange(this.syncMS * 0.5, this.syncMS));
-    }
+    sync = () => {
+        this.syncTimeoutId = setTimeout(this.onSync, this.syncMS * 0.5 + Math.random() * this.syncMS * 0.5);
+    };
     cleanOldMessages() {
         if (this.messages.size) {
             const now = Date.now();
@@ -109,12 +140,15 @@ export class Mesh extends EventEmitter {
         }
     }
 }
-function getRandomIdExceptFor(ids, id) {
-    const randomId = fromArray(ids).unwrap();
-    if (randomId === id) {
-        return getRandomIdExceptFor(ids, id);
+function getOldestPeerId(peers) {
+    let minConnectedAt = Number.MAX_SAFE_INTEGER;
+    let oldestPeer;
+    for (const peer of peers) {
+        const connectedAt = peer[1];
+        if (connectedAt < minConnectedAt) {
+            minConnectedAt = connectedAt;
+            oldestPeer = peer;
+        }
     }
-    else {
-        return randomId;
-    }
+    return oldestPeer;
 }

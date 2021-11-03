@@ -1,19 +1,21 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Mesh = exports.DEFAULT_MESSAGE_LAST_SEEN_DELETE_MS = exports.DEFAULT_SYNC_MS = void 0;
+exports.Mesh = exports.DEFAULT_REPLACE_OLD_PEER_MS = exports.DEFAULT_MESSAGE_LAST_SEEN_DELETE_MS = exports.DEFAULT_SYNC_MS = void 0;
 const eventemitter3_1 = require("eventemitter3");
 const buffer_1 = require("buffer");
-const rand_1 = require("@aicacia/rand");
 exports.DEFAULT_SYNC_MS = 60000;
-exports.DEFAULT_MESSAGE_LAST_SEEN_DELETE_MS = 3 * 60000;
+exports.DEFAULT_MESSAGE_LAST_SEEN_DELETE_MS = 5 * 60000;
+exports.DEFAULT_REPLACE_OLD_PEER_MS = 5 * 60000;
 class Mesh extends eventemitter3_1.EventEmitter {
     constructor(peer, options = {}) {
         super();
         this.maxConnections = 6;
         this.syncMS = exports.DEFAULT_SYNC_MS;
         this.messageLastSeenDeleteMS = exports.DEFAULT_MESSAGE_LAST_SEEN_DELETE_MS;
+        this.replaceOldPeerMS = exports.DEFAULT_REPLACE_OLD_PEER_MS;
         this.messageId = 0;
         this.messages = new Map();
+        this.connections = new Map();
         this.payloadsToSend = [];
         this.onData = (data, _from) => {
             if (typeof data === "string" || buffer_1.Buffer.isBuffer(data)) {
@@ -26,25 +28,44 @@ class Mesh extends eventemitter3_1.EventEmitter {
             }
         };
         this.onDiscover = (id) => {
-            if (this.peer.getConnections().has(id)) {
-                return;
-            }
-            if (this.needsConnection()) {
-                this.peer.connectToInBackground(id);
-            }
-            else {
-                this.peer.connectTo(id).then(() => {
-                    const peers = Array.from(this.peer.getConnections().keys());
-                    if (peers.length > 1) {
-                        this.peer.disconnectFrom(getRandomIdExceptFor(peers, id));
+            if (!this.peer.getConnections().has(id)) {
+                let shouldConnect = false;
+                if (this.needsConnection()) {
+                    shouldConnect = true;
+                }
+                else {
+                    const peer = getOldestPeerId(this.connections.entries());
+                    if (peer) {
+                        const [oldestPeerId, connectedAt] = peer;
+                        if (connectedAt < Date.now() - this.replaceOldPeerMS) {
+                            this.peer.disconnectFrom(oldestPeerId);
+                            shouldConnect = true;
+                        }
                     }
-                });
+                }
+                if (shouldConnect) {
+                    this.peer.connectToInBackground(id);
+                }
             }
         };
-        this.onConnection = () => {
+        this.onConnection = (_connection, id) => {
             if (this.payloadsToSend.length) {
                 this.payloadsToSend.forEach((payload) => this.broadcastInternal(payload));
                 this.payloadsToSend.length = 0;
+            }
+            this.connections.set(id, Date.now());
+        };
+        this.onDisconnection = (_connection, id) => {
+            if (this.needsConnection()) {
+                this.peer.announce();
+            }
+            this.connections.delete(id);
+        };
+        this.onDisconnect = () => {
+            this.connections.clear();
+            if (this.syncTimeoutId) {
+                clearTimeout(this.syncTimeoutId);
+                this.syncTimeoutId = undefined;
             }
         };
         this.onSync = () => {
@@ -52,14 +73,20 @@ class Mesh extends eventemitter3_1.EventEmitter {
                 this.peer.announce();
             }
             this.cleanOldMessages();
+            this.syncTimeoutId = undefined;
             this.sync();
+        };
+        this.sync = () => {
+            this.syncTimeoutId = setTimeout(this.onSync, this.syncMS * 0.5 + Math.random() * this.syncMS * 0.5);
         };
         this.peer = peer;
         this.peer.on("data", this.onData);
         this.peer.on("join", this.onDiscover);
         this.peer.on("announce", this.onDiscover);
         this.peer.on("connection", this.onConnection);
-        this.peer.once("connect", this.onSync);
+        this.peer.on("disconnection", this.onDisconnection);
+        this.peer.on("connect", this.sync);
+        this.peer.on("disconnect", this.onDisconnect);
         if (typeof options.maxConnections === "number" &&
             options.maxConnections > 0) {
             this.maxConnections = options.maxConnections;
@@ -71,13 +98,19 @@ class Mesh extends eventemitter3_1.EventEmitter {
             options.messageLastSeenDeleteMS > 0) {
             this.messageLastSeenDeleteMS = options.messageLastSeenDeleteMS;
         }
-        this.sync();
+        if (typeof options.replaceOldPeerMS === "number" &&
+            options.replaceOldPeerMS > 0) {
+            this.replaceOldPeerMS = options.replaceOldPeerMS;
+        }
+        if (this.peer.isConnected()) {
+            this.sync();
+        }
     }
     getPeer() {
         return this.peer;
     }
     broadcast(payload) {
-        if (this.peer.getConnections().size === 0) {
+        if (this.connections.size === 0) {
             this.payloadsToSend.push(payload);
         }
         else {
@@ -95,10 +128,7 @@ class Mesh extends eventemitter3_1.EventEmitter {
         return this;
     }
     needsConnection() {
-        return this.peer.getConnections().size < this.maxConnections;
-    }
-    sync() {
-        setTimeout(this.onSync, (0, rand_1.nextIntInRange)(this.syncMS * 0.5, this.syncMS));
+        return this.connections.size < this.maxConnections;
     }
     cleanOldMessages() {
         if (this.messages.size) {
@@ -112,12 +142,15 @@ class Mesh extends eventemitter3_1.EventEmitter {
     }
 }
 exports.Mesh = Mesh;
-function getRandomIdExceptFor(ids, id) {
-    const randomId = (0, rand_1.fromArray)(ids).unwrap();
-    if (randomId === id) {
-        return getRandomIdExceptFor(ids, id);
+function getOldestPeerId(peers) {
+    let minConnectedAt = Number.MAX_SAFE_INTEGER;
+    let oldestPeer;
+    for (const peer of peers) {
+        const connectedAt = peer[1];
+        if (connectedAt < minConnectedAt) {
+            minConnectedAt = connectedAt;
+            oldestPeer = peer;
+        }
     }
-    else {
-        return randomId;
-    }
+    return oldestPeer;
 }

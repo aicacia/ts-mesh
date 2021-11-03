@@ -1,5 +1,4 @@
 import SimplePeer from "simple-peer";
-import type { IPeerData } from "../src";
 import { Mesh, Peer } from "../src";
 
 async function onLoad() {
@@ -7,7 +6,7 @@ async function onLoad() {
       namespace: "example-namespace",
     }),
     mesh = new Mesh(peer, {
-      maxConnections: 1,
+      maxConnections: 2,
     });
 
   let currentId: string;
@@ -17,21 +16,19 @@ async function onLoad() {
       message = input.value;
 
     if (message) {
-      mesh.broadcast({ message });
+      mesh.broadcast(message);
       onMessage(message, "me");
       input.value = "";
     }
   });
 
-  function onMessage(mesage: IPeerData, from: string) {
+  function onMessage(mesage: any, from: string) {
     const li = document.createElement("li");
     li.innerHTML = `${from}: ${mesage}`;
     document.getElementById("messages").appendChild(li);
   }
 
-  mesh.on("data", (data, from) => {
-    onMessage(data, from);
-  });
+  mesh.on("data", onMessage);
   mesh
     .getPeer()
     .on("connection", (_connection, id) => {
