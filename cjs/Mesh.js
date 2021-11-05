@@ -3,9 +3,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Mesh = exports.DEFAULT_REPLACE_OLD_PEER_MS = exports.DEFAULT_MESSAGE_LAST_SEEN_DELETE_MS = exports.DEFAULT_SYNC_MS = void 0;
 const eventemitter3_1 = require("eventemitter3");
 const buffer_1 = require("buffer");
-exports.DEFAULT_SYNC_MS = 60000;
-exports.DEFAULT_MESSAGE_LAST_SEEN_DELETE_MS = 5 * 60000;
-exports.DEFAULT_REPLACE_OLD_PEER_MS = 5 * 60000;
+exports.DEFAULT_SYNC_MS = 30000;
+exports.DEFAULT_MESSAGE_LAST_SEEN_DELETE_MS = 60000;
+exports.DEFAULT_REPLACE_OLD_PEER_MS = 60000;
 class Mesh extends eventemitter3_1.EventEmitter {
     constructor(peer, options = {}) {
         super();
@@ -29,22 +29,19 @@ class Mesh extends eventemitter3_1.EventEmitter {
         };
         this.onDiscover = (id) => {
             if (!this.peer.getConnections().has(id)) {
-                let shouldConnect = false;
                 if (this.needsConnection()) {
-                    shouldConnect = true;
+                    this.peer.connectToInBackground(id);
                 }
                 else {
                     const peer = getOldestPeerId(this.connections.entries());
                     if (peer) {
                         const [oldestPeerId, connectedAt] = peer;
                         if (connectedAt < Date.now() - this.replaceOldPeerMS) {
-                            this.peer.disconnectFrom(oldestPeerId);
-                            shouldConnect = true;
+                            this.peer
+                                .connectTo(id)
+                                .then(() => this.peer.disconnectFrom(oldestPeerId));
                         }
                     }
-                }
-                if (shouldConnect) {
-                    this.peer.connectToInBackground(id);
                 }
             }
         };

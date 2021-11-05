@@ -4,9 +4,9 @@ import type { IPeerData } from "./Peer";
 import type { Peer } from "./Peer";
 import type { PeerConnection } from ".";
 
-export const DEFAULT_SYNC_MS = 60_000;
-export const DEFAULT_MESSAGE_LAST_SEEN_DELETE_MS = 5 * 60_000;
-export const DEFAULT_REPLACE_OLD_PEER_MS = 5 * 60_000;
+export const DEFAULT_SYNC_MS = 30_000;
+export const DEFAULT_MESSAGE_LAST_SEEN_DELETE_MS = 60_000;
+export const DEFAULT_REPLACE_OLD_PEER_MS = 60_000;
 
 export interface IMeshEvents {
   data(data: any, from: string): void;
@@ -113,10 +113,8 @@ export class Mesh extends EventEmitter<IMeshEvents> {
   };
   private onDiscover = (id: string) => {
     if (!this.peer.getConnections().has(id)) {
-      let shouldConnect = false;
-
       if (this.needsConnection()) {
-        shouldConnect = true;
+        this.peer.connectToInBackground(id);
       } else {
         const peer = getOldestPeerId(this.connections.entries());
 
@@ -124,14 +122,11 @@ export class Mesh extends EventEmitter<IMeshEvents> {
           const [oldestPeerId, connectedAt] = peer;
 
           if (connectedAt < Date.now() - this.replaceOldPeerMS) {
-            this.peer.disconnectFrom(oldestPeerId);
-            shouldConnect = true;
+            this.peer
+              .connectTo(id)
+              .then(() => this.peer.disconnectFrom(oldestPeerId));
           }
         }
-      }
-
-      if (shouldConnect) {
-        this.peer.connectToInBackground(id);
       }
     }
   };

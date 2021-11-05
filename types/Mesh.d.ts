@@ -1,8 +1,8 @@
 import { EventEmitter } from "eventemitter3";
 import type { Peer } from "./Peer";
-export declare const DEFAULT_SYNC_MS = 60000;
-export declare const DEFAULT_MESSAGE_LAST_SEEN_DELETE_MS: number;
-export declare const DEFAULT_REPLACE_OLD_PEER_MS: number;
+export declare const DEFAULT_SYNC_MS = 30000;
+export declare const DEFAULT_MESSAGE_LAST_SEEN_DELETE_MS = 60000;
+export declare const DEFAULT_REPLACE_OLD_PEER_MS = 60000;
 export interface IMeshEvents {
     data(data: any, from: string): void;
 }
