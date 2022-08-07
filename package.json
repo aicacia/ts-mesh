@@ -21,7 +21,8 @@
     "lint": "eslint . --fix",
     "prettier": "prettier --ignore-path ./.eslintignore --ignore-unknown --write .",
     "preCommit": "npm run prettier && npm run lint && npm run coverage && npm run prepublishOnly",
-    "example": "parcel serve example/index.html"
+    "example": "parcel serve example/index.html",
+    "prepare": "husky install"
   },
   "husky": {
     "hooks": {
@@ -38,7 +39,7 @@
   "license": "(MIT OR Apache-2.0)",
   "readmeFilename": "README.md",
   "devDependencies": {
-    "@rollup/plugin-commonjs": "21",
+    "@rollup/plugin-commonjs": "22",
     "@rollup/plugin-node-resolve": "13",
     "@rollup/plugin-typescript": "8",
     "@types/simple-peer": "9",
@@ -48,11 +49,13 @@
     "eslint": "8",
     "eslint-config-prettier": "8",
     "eslint-plugin-prettier": "4",
-    "husky": "4",
+    "events": "^3.3.0",
+    "husky": "8",
     "nodemon": "2",
     "nyc": "15",
-    "parcel": "next",
+    "parcel": "2",
     "prettier": "2",
+    "process": "^0.11.10",
     "rollup-plugin-esm-import-to-url": "2",
     "rollup-plugin-polyfill-node": "0",
     "rollup-plugin-terser": "7",
@@ -70,8 +73,8 @@
     "socket.io-client": "4"
   },
   "peerDependencies": {
-    "tslib": "2",
-    "simple-peer": "9"
+    "simple-peer": "9",
+    "tslib": "2"
   },
   "nyc": {
     "include": [

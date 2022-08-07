@@ -2,7 +2,8 @@ import SimplePeer from "simple-peer";
 import { Mesh, Peer } from "../src";
 
 async function onLoad() {
-  const peer = new Peer(SimplePeer, {
+  const peer = new Peer({
+      SimplePeer,
       namespace: "example-namespace",
     }),
     mesh = new Mesh(peer, {
@@ -11,7 +12,7 @@ async function onLoad() {
 
   let currentId: string;
 
-  document.getElementById("send").addEventListener("click", async () => {
+  document.getElementById("send")?.addEventListener("click", async () => {
     const input = document.getElementById("message") as HTMLInputElement,
       message = input.value;
 
@@ -25,7 +26,7 @@ async function onLoad() {
   function onMessage(mesage: any, from: string) {
     const li = document.createElement("li");
     li.innerHTML = `${from}: ${mesage}`;
-    document.getElementById("messages").appendChild(li);
+    document.getElementById("messages")?.appendChild(li);
   }
 
   mesh.on("data", onMessage);
@@ -39,7 +40,8 @@ async function onLoad() {
     })
     .on("connect", (id) => {
       currentId = id;
-      document.getElementById("peer-id").innerText = currentId;
+      const peerIdElement = document.getElementById("peer-id") as HTMLElement;
+      peerIdElement.innerText = currentId;
     });
 }
 
