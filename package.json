@@ -24,11 +24,6 @@
     "example": "parcel serve example/index.html",
     "prepare": "husky install"
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "npm run preCommit"
-    }
-  },
   "keywords": [
     "mesh",
     "network",
@@ -62,17 +57,18 @@
     "tap-nyc": "1",
     "tap-spec": "5",
     "tape": "5",
+    "buffer": "6",
+    "socket.io-client": "4",
     "ts-node": "10",
     "tslib": "2",
     "typedoc": "0",
     "typescript": "4"
   },
   "dependencies": {
-    "buffer": "6",
-    "eventemitter3": "4",
-    "socket.io-client": "4"
+    "eventemitter3": "4"
   },
   "peerDependencies": {
+    "socket.io-client": "4",
     "simple-peer": "9",
     "tslib": "2"
   },

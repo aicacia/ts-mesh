@@ -1,7 +1,7 @@
 import { EventEmitter } from "eventemitter3";
 import type { SimplePeerData, Instance } from "simple-peer";
 import type SimplePeer from "simple-peer";
-import { io, Socket } from "socket.io-client";
+import type { Socket } from "socket.io-client";
 
 export type IPeerData = SimplePeerData;
 export type PeerConnection = Instance;
@@ -18,9 +18,8 @@ export interface IPeerEvents {
 }
 
 export interface IPeerOptions {
+  socket: Socket;
   SimplePeer: SimplePeer.SimplePeer;
-  origin?: string;
-  namespace?: string;
 }
 
 export class Peer extends EventEmitter<IPeerEvents> {
@@ -28,12 +27,10 @@ export class Peer extends EventEmitter<IPeerEvents> {
   protected readonly connections: Map<string, PeerConnection> = new Map();
   protected SimplePeer: SimplePeer.SimplePeer;
 
-  constructor(options: IPeerOptions) {
+  constructor(socket: Socket, SimplePeerClass: SimplePeer.SimplePeer) {
     super();
-    this.SimplePeer = options.SimplePeer;
-    this.socket = io(
-      `${options.origin || "wss://mesh.aicacia.com"}/${options.namespace || ""}`
-    );
+    this.SimplePeer = SimplePeerClass;
+    this.socket = socket;
     this.socket.on("signal", this.onSignal);
     this.socket.on("connect", this.onConnect);
     this.socket.on("disconnect", this.onDisonnect);
