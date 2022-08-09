@@ -8,8 +8,8 @@ export const DEFAULT_SYNC_MS = 30_000;
 export const DEFAULT_MESSAGE_LAST_SEEN_DELETE_MS = 60_000;
 export const DEFAULT_REPLACE_OLD_PEER_MS = 60_000;
 
-export interface IMeshEvents {
-  data(data: any, from: string): void;
+export interface IMeshEvents<T = any> {
+  data(data: T, from: string): void;
 }
 
 export interface IMeshOptions {
@@ -19,7 +19,7 @@ export interface IMeshOptions {
   replaceOldPeerMS?: number;
 }
 
-export class Mesh extends EventEmitter<IMeshEvents> {
+export class Mesh<T = any> extends EventEmitter<IMeshEvents<T>> {
   protected peer: Peer;
   protected maxConnections = 6;
   protected syncMS = DEFAULT_SYNC_MS;
@@ -28,8 +28,8 @@ export class Mesh extends EventEmitter<IMeshEvents> {
   protected messageId = 0;
   protected messages: Map<string, number> = new Map();
   protected connections: Map<string, number> = new Map();
-  protected payloadsToSend: Array<any> = [];
-  protected syncTimeoutId: unknown | undefined;
+  protected payloadsToSend: Array<T> = [];
+  protected syncTimeoutId: ReturnType<typeof setTimeout> | undefined;
 
   constructor(peer: Peer, options: IMeshOptions = {}) {
     super();
@@ -71,7 +71,7 @@ export class Mesh extends EventEmitter<IMeshEvents> {
     return this.peer;
   }
 
-  broadcast(payload: any) {
+  broadcast(payload: T) {
     if (this.connections.size === 0) {
       this.payloadsToSend.push(payload);
     } else {
@@ -79,7 +79,7 @@ export class Mesh extends EventEmitter<IMeshEvents> {
     }
   }
 
-  private broadcastInternal(payload: any) {
+  private broadcastInternal(payload: T) {
     const from = this.peer.getId(),
       id = this.messageId++,
       messageId = `${from}-${id}`;
@@ -149,7 +149,7 @@ export class Mesh extends EventEmitter<IMeshEvents> {
   private onDisconnect = () => {
     this.connections.clear();
     if (this.syncTimeoutId) {
-      clearTimeout(this.syncTimeoutId as number);
+      clearTimeout(this.syncTimeoutId);
       this.syncTimeoutId = undefined;
     }
   };
