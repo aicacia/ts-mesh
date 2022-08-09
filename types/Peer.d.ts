@@ -1,7 +1,7 @@
 import { EventEmitter } from "eventemitter3";
 import type { SimplePeerData, Instance } from "simple-peer";
 import type SimplePeer from "simple-peer";
-import { Socket } from "socket.io-client";
+import type { Socket } from "socket.io-client";
 export declare type IPeerData = SimplePeerData;
 export declare type PeerConnection = Instance;
 export interface IPeerEvents {
@@ -15,15 +15,14 @@ export interface IPeerEvents {
     data(this: Peer, data: IPeerData, from: string): void;
 }
 export interface IPeerOptions {
+    socket: Socket;
     SimplePeer: SimplePeer.SimplePeer;
-    origin?: string;
-    namespace?: string;
 }
 export declare class Peer extends EventEmitter<IPeerEvents> {
     protected socket: Socket;
     protected readonly connections: Map<string, PeerConnection>;
     protected SimplePeer: SimplePeer.SimplePeer;
-    constructor(options: IPeerOptions);
+    constructor(socket: Socket, SimplePeerClass: SimplePeer.SimplePeer);
     getId(): string;
     isConnected(): boolean;
     connected(): Promise<Socket<import("@socket.io/component-emitter").DefaultEventsMap, import("@socket.io/component-emitter").DefaultEventsMap>>;

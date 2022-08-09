@@ -1,13 +1,12 @@
 import { EventEmitter } from "eventemitter3";
-import { io } from "socket.io-client";
 export class Peer extends EventEmitter {
     socket;
     connections = new Map();
     SimplePeer;
-    constructor(options) {
+    constructor(socket, SimplePeerClass) {
         super();
-        this.SimplePeer = options.SimplePeer;
-        this.socket = io(`${options.origin || "wss://mesh.aicacia.com"}/${options.namespace || ""}`);
+        this.SimplePeer = SimplePeerClass;
+        this.socket = socket;
         this.socket.on("signal", this.onSignal);
         this.socket.on("connect", this.onConnect);
         this.socket.on("disconnect", this.onDisonnect);
