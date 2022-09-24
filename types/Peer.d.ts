@@ -14,10 +14,6 @@ export interface IPeerEvents {
     disconnection(this: Peer, connection: PeerConnection, id: string): void;
     data(this: Peer, data: IPeerData, from: string): void;
 }
-export interface IPeerOptions {
-    socket: Socket;
-    SimplePeer: SimplePeer.SimplePeer;
-}
 export declare class Peer extends EventEmitter<IPeerEvents> {
     protected socket: Socket;
     protected readonly connections: Map<string, PeerConnection>;

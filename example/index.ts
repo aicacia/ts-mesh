@@ -1,11 +1,9 @@
 import SimplePeer from "simple-peer";
+import { io } from "socket.io-client";
 import { Mesh, Peer } from "../src";
 
 async function onLoad() {
-  const peer = new Peer({
-      SimplePeer,
-      namespace: "example-namespace",
-    }),
+  const peer = new Peer(io("wss://mesh.aicacia.com/mesh-example"), SimplePeer),
     mesh = new Mesh(peer, {
       maxConnections: 2,
     });
