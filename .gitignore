@@ -4,5 +4,9 @@ dist/
 node_modules/
 coverage/
 docs/
+browser/
+cjs/
+esm/
+types/
 .nyc_output/
 npm-debug.log
