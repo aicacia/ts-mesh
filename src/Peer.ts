@@ -41,7 +41,7 @@ export class Peer extends EventEmitter<IPeerEvents> {
     return this.socket.connected;
   }
   connected() {
-    return waitForSocket(this.socket);
+    return waitFor(this.socket);
   }
 
   getConnections(): ReadonlyMap<string, PeerConnection> {
@@ -117,34 +117,7 @@ export class Peer extends EventEmitter<IPeerEvents> {
     return this;
   }
   connectTo(id: string) {
-    const connection = this.getOrCreateConnection(id, true);
-
-    return new Promise<PeerConnection>((resolve, reject) => {
-      if (connection.connected) {
-        resolve(connection);
-      } else {
-        const onConnect = () => {
-          removeListeners();
-          resolve(connection);
-        };
-        const onClose = () => {
-          removeListeners();
-          reject();
-        };
-        const onError = (error?: Error) => {
-          removeListeners();
-          reject(error);
-        };
-        const removeListeners = () => {
-          connection.off("connect", onConnect);
-          connection.off("disconnect", onClose);
-          connection.off("error", onError);
-        };
-        connection.once("connect", onConnect);
-        connection.once("disconnect", onClose);
-        connection.once("error", onError);
-      }
-    });
+    return waitFor(this.getOrCreateConnection(id, true));
   }
   disconnectFrom(id: string, emit = true) {
     const connection = this.connections.get(id);
@@ -199,31 +172,31 @@ export class Peer extends EventEmitter<IPeerEvents> {
   }
 }
 
-export function waitForSocket(socket: Socket) {
-  return new Promise<Socket>((resolve, reject) => {
-    if (socket.connected) {
-      resolve(socket);
+export function waitFor<T extends Socket | Instance>(object: T) {
+  return new Promise<T>((resolve, reject) => {
+    if (object.connected) {
+      resolve(object);
     } else {
-      const onConnect = () => {
+      function onConnect() {
         removeListeners();
-        resolve(socket);
-      };
-      const onClose = () => {
+        resolve(object);
+      }
+      function onClose() {
         removeListeners();
         reject();
-      };
-      const onError = (error?: Error) => {
+      }
+      function onError(error?: Error) {
         removeListeners();
         reject(error);
-      };
-      const removeListeners = () => {
-        socket.off("connect", onConnect);
-        socket.off("disconnect", onClose);
-        socket.off("error", onError);
-      };
-      socket.once("connect", onConnect);
-      socket.once("disconnect", onClose);
-      socket.once("error", onError);
+      }
+      function removeListeners() {
+        object.off("connect", onConnect);
+        object.off("disconnect", onClose);
+        object.off("error", onError);
+      }
+      object.once("connect", onConnect);
+      object.once("disconnect", onClose);
+      object.once("error", onError);
     }
   });
 }

@@ -2,11 +2,24 @@ import SimplePeer from "simple-peer";
 import { io } from "socket.io-client";
 import { Mesh, Peer } from "../src";
 
+declare global {
+  interface Window {
+    mesh: Mesh;
+    peer: Peer;
+  }
+}
+
 async function onLoad() {
-  const peer = new Peer(io("wss://mesh.aicacia.com/mesh-example"), SimplePeer),
-    mesh = new Mesh(peer, {
-      maxConnections: 2,
-    });
+  const peer = new Peer(
+      io("wss://mesh.aicacia.com/mesh-example", {
+        transports: ["websocket"],
+      }),
+      SimplePeer
+    ),
+    mesh = new Mesh(peer);
+
+  window.peer = peer;
+  window.mesh = mesh;
 
   let currentId: string;
 
@@ -28,8 +41,7 @@ async function onLoad() {
   }
 
   mesh.on("data", onMessage);
-  mesh
-    .getPeer()
+  peer
     .on("connection", (_connection, id) => {
       console.log("connection", id);
     })

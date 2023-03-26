@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "importsNotUsedAsValues": "error",
     "importHelpers": true,
     "target": "ES2015",
     "module": "CommonJS",
@@ -11,12 +10,22 @@
     "declarationDir": "types",
     "strict": true,
     "downlevelIteration": true,
-    "lib": ["DOM", "ESNext"]
+    "lib": [
+      "DOM",
+      "ESNext"
+    ]
   },
-  "include": ["src"],
-  "exclude": ["src/**/*.test.*", "src/**/*.benchmark.*"],
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "src/**/*.test.*",
+    "src/**/*.benchmark.*"
+  ],
   "typedocOptions": {
-    "entryPoints": ["src/index.ts"],
+    "entryPoints": [
+      "src/index.ts"
+    ],
     "out": "docs",
     "excludeExternals": true,
     "excludePrivate": true,

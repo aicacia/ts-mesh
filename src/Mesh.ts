@@ -39,7 +39,7 @@ export class Mesh<T = any> extends EventEmitter<IMeshEvents<T>> {
     this.peer.on("announce", this.onDiscover);
     this.peer.on("connection", this.onConnection);
     this.peer.on("disconnection", this.onDisconnection);
-    this.peer.on("connect", this.sync);
+    this.peer.on("connect", this.onSync);
     this.peer.on("disconnect", this.onDisconnect);
     if (
       typeof options.maxConnections === "number" &&
@@ -63,7 +63,7 @@ export class Mesh<T = any> extends EventEmitter<IMeshEvents<T>> {
       this.replaceOldPeerMS = options.replaceOldPeerMS;
     }
     if (this.peer.isConnected()) {
-      this.sync();
+      this.onSync();
     }
   }
 

@@ -1,6 +1,6 @@
 {
   "name": "@aicacia/mesh",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "mesh network",
   "repository": {
     "type": "git",
@@ -34,13 +34,14 @@
   "license": "(MIT OR Apache-2.0)",
   "readmeFilename": "README.md",
   "devDependencies": {
-    "@rollup/plugin-commonjs": "22",
-    "@rollup/plugin-node-resolve": "14",
-    "@rollup/plugin-typescript": "8",
+    "@rollup/plugin-commonjs": "24",
+    "@rollup/plugin-node-resolve": "15",
+    "@rollup/plugin-typescript": "11",
     "@types/simple-peer": "9",
     "@types/tape": "4",
     "@typescript-eslint/eslint-plugin": "5",
     "@typescript-eslint/parser": "5",
+    "buffer": "5",
     "eslint": "8",
     "eslint-config-prettier": "8",
     "eslint-plugin-prettier": "4",
@@ -53,22 +54,21 @@
     "rollup-plugin-esm-import-to-url": "2",
     "rollup-plugin-polyfill-node": "0",
     "rollup-plugin-terser": "7",
+    "socket.io-client": "4",
     "tap-nyc": "1",
     "tap-spec": "5",
     "tape": "5",
-    "buffer": "6",
-    "socket.io-client": "4",
     "ts-node": "10",
     "tslib": "2",
     "typedoc": "0",
-    "typescript": "4"
+    "typescript": "5"
   },
   "dependencies": {
-    "eventemitter3": "4"
+    "eventemitter3": "5"
   },
   "peerDependencies": {
-    "socket.io-client": "4",
     "simple-peer": "9",
+    "socket.io-client": "4",
     "tslib": "2"
   },
   "nyc": {
